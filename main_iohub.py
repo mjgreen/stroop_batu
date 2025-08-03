@@ -38,7 +38,7 @@ word = visual.TextStim(win, text="dummy-word", color="white", pos=(0,0))
 dev_feedback = visual.TextStim(win, text="dummy-dev_feedback", color="black", pos=(0,-.25))
 
 # Read spreadsheet trial definitions
-session = "a.csv"
+session = this_block
 trial_definitions = importConditions(session)
 trials = TrialHandler(trialList=trial_definitions, nReps=1, method = 'random')
 # Inform the ioHub server about the TrialHandler
@@ -70,6 +70,7 @@ for trial in trials:
     iti = iti_base + all_jitters[1]
     core.wait(iti)
     trial['this_iti'] = iti
+    trial['this_block'] = this_block
     # At the end of each trial, before getting
     # the next trial handler row, send the trial
     # variable states to iohub so they can be stored for future

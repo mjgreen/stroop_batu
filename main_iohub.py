@@ -15,11 +15,11 @@ myDlg = gui.Dlg(title="Batu Stroop v1")
 myDlg.addField('ID_NUMBER:', 0)
 myDlg.addField('ID_DATE:', strftime("%Y-%m-%d_%H:%M:%S", gmtime()))
 myDlg.addField('ID_RANDOM:', random_string)
-myDlg.addField('Block:', choices=['A', 'B', 'C', 'D', 'E'])
+myDlg.addField('Block:', choices=['Z','A', 'B', 'C', 'D', 'E'])
 myDlg.addField('Type of session:', choices=["Real Run", "Practice"])
-myDlg.addField('Trial duration:', choices=[5.0, 2.0])
-dialog = myDlg.show()  # show dialog and wait for OK or Cancel
-if myDlg.OK:  # or if ok_data is not None
+myDlg.addField('Trial duration:', choices=[2, 5])
+dialog = myDlg.show()  
+if myDlg.OK:  
     print(dialog)
 else:
     print('user cancelled')
@@ -38,11 +38,10 @@ io = launchHubServer(
 # Initiate components
 button_box = io.devices.keyboard
 word = visual.TextStim(win, text="dummy-word", color="white", pos=(0,0))
-dev_feedback = visual.TextStim(win, text="dummy-dev_feedback", color="black", pos=(0,-.25))
+dev_feedback = visual.TextStim(win, text="dummy-dev_feedback", color="black", pos=(0,-.25), height=0.05)
 
 # Read spreadsheet trial definitions
-session = this_block
-trial_definitions = importConditions(session)
+trial_definitions = importConditions(this_block)
 trials = TrialHandler(trialList=trial_definitions, nReps=1, method = 'random')
 # Inform the ioHub server about the TrialHandler
 io.createTrialHandlerRecordTable(trials)
@@ -53,6 +52,10 @@ all_jitters = [0.25,0.275,0.3,0.325,0.35,.375,0.4,0.425,0.45,0.475,0.5,0.525,0.5
 ntrials=0
 for trial in trials:
     ntrials+=1
+    trial['trial_number'] = ntrials
+    trial['randomid'] = dialog['ID_RANDOM:']
+    trial['subject_number'] = dialog['ID_NUMBER:']
+    trial['session_time'] = dialog['ID_DATE:']
     print(f'Trial {ntrials} Starting')
     word.setText(trial['word'])
     word.setColor(trial['colour'])
@@ -60,32 +63,24 @@ for trial in trials:
     win.flip()
     t0 = getTime()
     button_box.reporting = True
+    button_box.clearEvents()
     while getTime()-t0 <= trial_duration:
-        events = button_box.getEvents()
-        for event in events:
-            if event.type == button_box.KEY_PRESS:
-                print(f'\tPress: {event.key} at {round(event.time - t0,3)}')
-                dev_feedback.setText(event.key)
+        presses = button_box.getPresses(keys=['r','g','b','y','q'], clear=True)
+        if presses:
+            button_box.reporting = False
+            for press in presses:
+                trial['key'] = press.key
+                trial['rt'] = press.time - t0
+                trial['accuracy'] = int(trial['key'] == trial['correct_response'])
+                dev_feedback.setText(press.key+" at "+str(round(press.time-t0,3)))
                 dev_feedback.draw()
                 word.draw()
                 win.flip()
-                trial_response = event.key
-                if event.key == 'q' or event.key == 'escape':
-                    io.quit()
-                    core.quit()
-            if event.type == button_box.KEY_RELEASE:
-                print(f'\tRelease: {event.key} at {round(event.time - t0,3)}')
-        if events:
-            button_box.reporting = False
     win.flip()
     shuffle(all_jitters)
     iti = iti_base + all_jitters[1]
     core.wait(iti)
-    trial['this_iti'] = iti
-    trial['this_block'] = this_block
-    trial['key'] = trial_response
     # At the end of each trial, before getting the next trial handler row, send the trial variable states to iohub so they can be stored for future reference.
     io.addTrialHandlerRecord(trial)
-    
-
 io.quit()
+

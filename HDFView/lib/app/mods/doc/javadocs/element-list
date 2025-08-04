@@ -1,0 +1,17 @@
+module:org.hdfgroup.hdfview
+hdf
+hdf.view
+hdf.view.DataView
+hdf.view.dialog
+hdf.view.HelpView
+hdf.view.ImageView
+hdf.view.MetaDataView
+hdf.view.PaletteView
+hdf.view.TableView
+hdf.view.TreeView
+module:org.hdfgroup.object
+hdf.object
+hdf.object.fits
+hdf.object.h4
+hdf.object.h5
+hdf.object.nc2

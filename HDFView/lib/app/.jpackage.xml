@@ -1,0 +1,7 @@
+<?xml version="1.0" ?>
+<jpackage-state version="21.0.3" platform="linux">
+  <app-version>3.3.2</app-version>
+  <main-launcher>HDFView</main-launcher>
+  <main-class>hdf.view.HDFView</main-class>
+  <signed>false</signed>
+  <app-store>false</app-store></jpackage-state>

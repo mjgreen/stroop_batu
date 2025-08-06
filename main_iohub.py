@@ -29,7 +29,7 @@ this_block = "BLOCK"+dialog['Block:']+".xlsx"
 trial_duration = float(dialog['Trial duration:'])
 print(trial_duration)
 
-win = visual.Window([800, 600], fullscr=False, units='height', monitor='fmri')
+win = visual.Window([800, 600], fullscr=True, units='height', monitor='fmri', screen=1)
 io = launchHubServer(
     window=win,
     experiment_code="batustroop",

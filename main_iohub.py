@@ -65,7 +65,7 @@ for trial in trials:
     button_box.reporting = True
     button_box.clearEvents()
     while getTime()-t0 <= trial_duration:
-        presses = button_box.getPresses(keys=['r','g','b','y','q'], clear=True)
+        presses = button_box.getPresses(keys=['r','g','b','y','e','w','n','d','q'], clear=True)  
         if presses:
             button_box.reporting = False
             for press in presses:

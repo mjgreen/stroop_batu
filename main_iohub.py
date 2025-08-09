@@ -25,20 +25,25 @@ else:
     print('user cancelled')
     core.quit()
 
-this_block = "BLOCK"+dialog['Block:']+".xlsx"
+this_block = "BLOCK"+dialog['Block:']+".csv"
 trial_duration = float(dialog['Trial duration:'])
 print(trial_duration)
+session_code = str(dialog['ID_NUMBER:']) + "_" + str(dialog['ID_RANDOM:'])
+print(session_code)
 
 win = visual.Window([800, 600], fullscr=True, units='height', monitor='fmri', screen=1)
+
 io = launchHubServer(
-    window=win,
-    experiment_code="batustroop",
-    session_code=dialog['ID_RANDOM:'])
+    window = win,
+    experiment_code = "data/batustroop",
+    session_code = session_code
+    )
 
 # Initiate components
 button_box = io.devices.keyboard
 word = visual.TextStim(win, text="dummy-word", color="white", pos=(0,0))
 dev_feedback = visual.TextStim(win, text="dummy-dev_feedback", color="black", pos=(0,-.25), height=0.05)
+waiting = visual.TextStim(win, text="Waiting ...", color="black", pos=(0,-.25), height=0.05)
 
 # Read spreadsheet trial definitions
 trial_definitions = importConditions(this_block)
@@ -50,36 +55,68 @@ io.createTrialHandlerRecordTable(trials)
 iti_base = 0.25
 all_jitters = [0.25,0.275,0.3,0.325,0.35,.375,0.4,0.425,0.45,0.475,0.5,0.525,0.5,0.575,0.6,0.625,0.65,0.675,0.7,0.725,0.75]
 ntrials=0
+
+# Wait for T from scanner
+waiting.draw()
+win.flip()
+button_box.reporting = True
+t_received = False
+while not t_received:
+    tpresses = button_box.getPresses(keys=['t'])
+    if tpresses:
+        button_box.reporting = False
+        for tpress in tpresses:
+            time_of_first_t = tpress.time
+
+win.flip()
+
+# Start trial loop
 for trial in trials:
-    ntrials+=1
-    trial['trial_number'] = ntrials
-    trial['randomid'] = dialog['ID_RANDOM:']
-    trial['subject_number'] = dialog['ID_NUMBER:']
-    trial['session_time'] = dialog['ID_DATE:']
+    trial_start_time = getTime()
+    ntrials += 1
     print(f'Trial {ntrials} Starting')
     word.setText(trial['word'])
     word.setColor(trial['colour'])
     word.draw()
-    win.flip()
-    t0 = getTime()
+    stimulus_on = win.flip()
     button_box.reporting = True
     button_box.clearEvents()
-    while getTime()-t0 <= trial_duration:
+    while getTime() - stimulus_on <= trial_duration:
         presses = button_box.getPresses(keys=['r','g','b','y','e','w','n','d','q'], clear=True)  
         if presses:
             button_box.reporting = False
             for press in presses:
-                trial['key'] = press.key
-                trial['rt'] = press.time - t0
-                trial['accuracy'] = int(trial['key'] == trial['correct_response'])
-                dev_feedback.setText(press.key+" at "+str(round(press.time-t0,3)))
+                dev_feedback.setText(press.key+" at "+str(round(press.time-stimulus_on,3)))
                 dev_feedback.draw()
                 word.draw()
                 win.flip()
-    win.flip()
+    stimulus_off = win.flip()
     shuffle(all_jitters)
     iti = iti_base + all_jitters[1]
+    iti_on = getTime()
     core.wait(iti)
+    iti_off = getTime()
+    # explicitly add vars to the trial record
+    trial['session_code'] = session_code
+    trial['rt'] = press.time - stimulus_on
+    trial['trial_number'] = ntrials
+    trial['randomid'] = dialog['ID_RANDOM:']
+    trial['subject_number'] = dialog['ID_NUMBER:']
+    trial['session_time'] = dialog['ID_DATE:']
+    trial['accuracy'] = int(trial['key'] == trial['correct_response'])
+    trial['response'] = press.key
+    trial['response_on'] = press.time
+    trial['trial_number'] = ntrials
+    trial['randomid'] = dialog['ID_RANDOM:']
+    trial['subject_number'] = dialog['ID_NUMBER:']
+    trial['session_time'] = dialog['ID_DATE:']
+    trial['time_of_first_t'] = time_of_first_t
+    trial['stimulus_on'] = stimulus_on
+    trial['stimulus_off'] = stimulus_off
+    trial['iti_on'] = iti_on
+    trial['iti_off'] = iti_off
+    trial['iti_dur'] = iti
+    trial['trial_start_time'] = trial_start_time
     # At the end of each trial, before getting the next trial handler row, send the trial variable states to iohub so they can be stored for future reference.
     io.addTrialHandlerRecord(trial)
 io.quit()

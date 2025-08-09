@@ -1,0 +1,6 @@
+word,colour,type,block_identity,correct_response,trial_start_time,accuracy,response,response_on,response_off,trial_number,randomid,subject_number,session_time,time_of_first_t,stimulus_on,stimulus_off,iti_on,iti_off,iti_dur,session_code
+blue,blue,congurent,mixed,b,,,,,,,,,,,,,,,,
+yellow,green,incongurent,mixed,g,,,,,,,,,,,,,,,,
+%$!@,red,symbol,mixed,r,,,,,,,,,,,,,,,,
+song,red,neutral,mixed,r,,,,,,,,,,,,,,,,
+credit,yellow,neutral,mixed,y,,,,,,,,,,,,,,,,

@@ -1,4 +1,4 @@
-word,colour,type,block_identity,correct_response,trial_start_time,accuracy,response,response_on,response_off,trial_number,randomid,subject_number,session_time,time_of_first_t,stimulus_on,stimulus_off,iti_on,iti_off,iti_dur,session_code
+word,colour,type,block_identity,correct_response,subject_number,randomid,session_code,session_time,trial_number,trial_start_time,time_of_first_t,stimulus_on,response_on,stimulus_off,response,accuracy,rt,iti_on,iti_off,iti_dur
 blue,blue,congurent,mixed,b,,,,,,,,,,,,,,,,
 blue,blue,congurent,mixed,b,,,,,,,,,,,,,,,,
 blue,blue,congurent,mixed,b,,,,,,,,,,,,,,,,

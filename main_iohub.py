@@ -16,7 +16,7 @@ myDlg.addField('ID_NUMBER:', 0)
 myDlg.addField('ID_DATE:', strftime("%Y-%m-%d_%H:%M:%S", gmtime()))
 myDlg.addField('ID_RANDOM:', random_string)
 myDlg.addField('Block:', choices=['Z','A', 'B', 'C', 'D', 'E'])
-myDlg.addField('Type of session:', choices=["Real Run", "Practice"])
+# myDlg.addField('Type of session:', choices=["Real Run", "Practice"])
 myDlg.addField('Trial duration:', choices=[2, 5])
 dialog = myDlg.show()  
 if myDlg.OK:  
@@ -31,7 +31,9 @@ print(trial_duration)
 session_code = str(dialog['ID_NUMBER:']) + "_" + str(dialog['ID_RANDOM:'])
 print(session_code)
 
-win = visual.Window([800, 600], fullscr=True, units='height', monitor='fmri', screen=1)
+# win = visual.Window([800, 600], fullscr=True, units='height', monitor='fmri', screen=1)
+win = visual.Window([800, 600], fullscr=False, units='height', monitor='matt', screen=0)
+
 
 io = launchHubServer(
     window = win,
@@ -60,18 +62,27 @@ ntrials=0
 waiting.draw()
 win.flip()
 button_box.reporting = True
+button_box.clearEvents()
 t_received = False
 while not t_received:
-    tpresses = button_box.getPresses(keys=['t'])
+    tpresses = button_box.getPresses(keys=['t'], clear=True)
     if tpresses:
+        t_received = True
         button_box.reporting = False
         for tpress in tpresses:
             time_of_first_t = tpress.time
+            
 
 win.flip()
 
 # Start trial loop
 for trial in trials:
+
+    trial['rt'] = None
+    trial['accuracy'] = None
+    trial['response'] = None
+    trial['response_on'] = None
+
     trial_start_time = getTime()
     ntrials += 1
     print(f'Trial {ntrials} Starting')
@@ -86,10 +97,16 @@ for trial in trials:
         if presses:
             button_box.reporting = False
             for press in presses:
+                trial['rt'] = press.time - stimulus_on
+                trial['accuracy'] = int(press.key == trial['correct_response'])
+                trial['response'] = press.key
+                trial['response_on'] = press.time
                 dev_feedback.setText(press.key+" at "+str(round(press.time-stimulus_on,3)))
                 dev_feedback.draw()
                 word.draw()
                 win.flip()
+
+ 
     stimulus_off = win.flip()
     shuffle(all_jitters)
     iti = iti_base + all_jitters[1]
@@ -98,25 +115,17 @@ for trial in trials:
     iti_off = getTime()
     # explicitly add vars to the trial record
     trial['session_code'] = session_code
-    trial['rt'] = press.time - stimulus_on
     trial['trial_number'] = ntrials
     trial['randomid'] = dialog['ID_RANDOM:']
     trial['subject_number'] = dialog['ID_NUMBER:']
     trial['session_time'] = dialog['ID_DATE:']
-    trial['accuracy'] = int(trial['key'] == trial['correct_response'])
-    trial['response'] = press.key
-    trial['response_on'] = press.time
-    trial['trial_number'] = ntrials
-    trial['randomid'] = dialog['ID_RANDOM:']
-    trial['subject_number'] = dialog['ID_NUMBER:']
-    trial['session_time'] = dialog['ID_DATE:']
+    trial['trial_start_time'] = trial_start_time
     trial['time_of_first_t'] = time_of_first_t
     trial['stimulus_on'] = stimulus_on
     trial['stimulus_off'] = stimulus_off
     trial['iti_on'] = iti_on
     trial['iti_off'] = iti_off
     trial['iti_dur'] = iti
-    trial['trial_start_time'] = trial_start_time
     # At the end of each trial, before getting the next trial handler row, send the trial variable states to iohub so they can be stored for future reference.
     io.addTrialHandlerRecord(trial)
 io.quit()
